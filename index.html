@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#eae7e1">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>NCCP Client Needs Analysis — Homeowner Assist</title>
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --brand:#d4ac6a;--brand-deep:#b8923a;--brand-light:#e0c08a;
+  --brand-bg:#eae7e1;--brand-bg-deep:#ddd8d0;
+  --accent:#d4ac6a;--accent-hover:#b8923a;
+  --white:#FFFFFF;--cream:#f4f2ee;
+  --gray-50:#f7f6f3;--gray-100:#eae7e1;--gray-200:#ddd8d0;
+  --gray-300:#c5c0b8;--gray-400:#8c8c8c;--gray-500:#6e6e6e;
+  --gray-600:#525252;--gray-700:#3a3a3a;--gray-800:#1a1a1a;
+  --red:#B91C1C;--red-bg:#FEF2F2;
+  --green:#4a7c59;--green-bg:#f2f8f4;
+  --radius:10px;--radius-sm:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.03);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.06);
+}
+
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--cream);color:var(--gray-800);
+  line-height:1.55;min-height:100vh;
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+
+/* ── Header ── */
+.header{
+  background:var(--brand-bg);color:var(--gray-800);
+  padding:16px 16px 14px;text-align:center;
+  position:sticky;top:0;z-index:100;
+  border-bottom:2px solid var(--brand);
+}
+.header-logo{height:auto;width:min(280px,70%);display:block;margin:0 auto 6px}
+.header p{font-size:.6875rem;color:var(--gray-400);margin-top:0;letter-spacing:.1em;text-transform:uppercase}
+
+/* ── Container ── */
+.container{max-width:640px;margin:0 auto;padding:20px 16px 140px}
+
+/* ── Intro screen ── */
+.intro-card{
+  background:var(--white);border-radius:var(--radius);padding:28px 24px;
+  margin-bottom:16px;box-shadow:var(--shadow);border:1px solid var(--gray-200);
+}
+.intro-title{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:1.75rem;font-weight:700;color:var(--gray-800);
+  margin-bottom:14px;line-height:1.2;
+}
+.intro-body p{
+  color:var(--gray-700);font-size:.9375rem;line-height:1.65;
+  margin-bottom:14px;
+}
+.intro-body p:last-child{margin-bottom:0}
+
+.callout{
+  background:var(--brand-bg);border-left:3px solid var(--brand);
+  padding:14px 16px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  font-size:.8125rem;color:var(--gray-700);margin-bottom:16px;line-height:1.5;
+}
+
+.ack-box{
+  background:var(--brand-bg);border-left:3px solid var(--brand);
+  padding:14px 16px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  margin:22px 0 18px;display:flex;gap:12px;align-items:flex-start;
+}
+.ack-box input[type="checkbox"]{
+  margin-top:3px;width:18px;height:18px;accent-color:var(--brand);flex-shrink:0;
+}
+.ack-box label{
+  font-size:.875rem;color:var(--gray-700);cursor:pointer;line-height:1.5;
+  font-weight:500;margin:0;
+}
+
+/* ── Buttons ── */
+.btn{
+  padding:14px 22px;border:none;border-radius:var(--radius-sm);
+  font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  font-family:inherit;
+}
+.btn-primary{background:var(--accent);color:var(--white)}
+.btn-primary:hover:not(:disabled){background:var(--accent-hover)}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{background:var(--gray-300);cursor:not-allowed}
+.btn-secondary{background:var(--gray-100);color:var(--gray-600)}
+.btn-secondary:hover{background:var(--gray-200)}
+.btn-submit{background:var(--gray-800);color:var(--white)}
+.btn-submit:hover:not(:disabled){background:#2a2a2a}
+.btn-submit:disabled{background:var(--gray-300);cursor:not-allowed}
+.btn-block{width:100%}
+
+/* ── Form ── */
+.form-section{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card{
+  background:var(--white);border-radius:var(--radius);padding:22px;
+  margin-bottom:16px;box-shadow:var(--shadow);border:1px solid var(--gray-200);
+  scroll-margin-top:100px;
+}
+.card-title{
+  font-size:.875rem;font-weight:600;color:var(--brand);margin-bottom:18px;
+  display:flex;align-items:center;gap:10px;letter-spacing:.01em;
+  text-transform:uppercase;
+}
+.card-title .icon{
+  width:30px;height:30px;background:var(--brand-bg);
+  border:1px solid var(--brand-bg-deep);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.8125rem;font-weight:700;color:var(--brand-deep);flex-shrink:0;
+}
+.sub-head{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:1rem;font-weight:600;color:var(--gray-800);
+  margin:18px 0 12px;
+}
+.sub-head:first-child{margin-top:0}
+
+/* ── Fields ── */
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.field-row:last-child,.field-row-3:last-child{margin-bottom:0}
+.field-row .field,.field-row-3 .field{margin-bottom:0}
+
+label{
+  display:block;font-size:.8125rem;font-weight:500;
+  color:var(--gray-700);margin-bottom:6px;
+}
+label .required{color:var(--red);margin-left:2px}
+.hint{font-size:.6875rem;color:var(--gray-400);margin-top:4px}
+
+input[type="text"],input[type="email"],input[type="tel"],
+input[type="number"],input[type="date"],select,textarea{
+  width:100%;padding:12px 14px;border:1.5px solid var(--gray-300);
+  border-radius:var(--radius-sm);font-size:1rem;font-family:inherit;
+  color:var(--gray-800);background:var(--white);
+  transition:border-color .2s,box-shadow .2s;
+  -webkit-appearance:none;appearance:none;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;border-color:var(--brand);
+  box-shadow:0 0 0 3px rgba(212,172,106,.18);
+}
+.field.invalid input,.field.invalid select,.field.invalid textarea{
+  border-color:var(--red);background:var(--red-bg);
+}
+
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%236B6866' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;
+}
+
+/* ── Yes/No pill toggles ── */
+.toggle{display:flex;gap:8px;flex-wrap:wrap}
+.toggle button{
+  flex:1;min-width:70px;padding:12px 16px;
+  border:1.5px solid var(--gray-300);border-radius:var(--radius-sm);
+  font-size:.875rem;font-weight:500;color:var(--gray-600);
+  background:var(--white);cursor:pointer;transition:all .2s;font-family:inherit;
+}
+.toggle button.active{
+  border-color:var(--brand);background:var(--brand-bg);
+  color:var(--brand-deep);font-weight:600;
+}
+
+/* ── BNPL chip grid ── */
+.bnpl-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:8px;margin:10px 0;
+}
+.bnpl-chip{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 14px;border:1.5px solid var(--gray-300);
+  border-radius:var(--radius-sm);background:var(--white);
+  cursor:pointer;font-size:.8125rem;font-weight:500;color:var(--gray-600);
+  transition:all .2s;text-align:center;
+}
+.bnpl-chip input{display:none}
+.bnpl-chip.active{
+  border-color:var(--brand);background:var(--brand-bg);
+  color:var(--brand-deep);font-weight:600;
+}
+
+/* ── Repeatable rowsets ── */
+.rowset{
+  background:var(--gray-50);border:1px solid var(--gray-200);
+  border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;
+}
+.rowset .na-check{
+  display:flex;align-items:center;gap:8px;font-size:.8125rem;
+  color:var(--gray-500);margin-bottom:10px;cursor:pointer;
+}
+.rowset .na-check input{accent-color:var(--brand)}
+.rs-row{
+  display:grid;gap:8px;padding:12px;border:1px solid var(--gray-200);
+  border-radius:var(--radius-sm);margin-bottom:8px;background:var(--white);
+}
+.rs-row.cols-3{grid-template-columns:1.4fr 1fr 36px}
+.rs-row.cols-4{grid-template-columns:1.2fr 1fr 1fr 36px}
+.rs-row.cols-6{grid-template-columns:1.2fr .9fr .9fr .9fr .9fr 36px}
+.rs-row input,.rs-row select{
+  padding:10px 12px;font-size:.9375rem;
+  border:1.5px solid var(--gray-300);border-radius:6px;
+}
+.rs-row .del{
+  background:var(--red-bg);border:1px solid #fecaca;color:var(--red);
+  border-radius:6px;cursor:pointer;font-weight:700;font-size:1.125rem;
+  display:flex;align-items:center;justify-content:center;
+}
+.add-more{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 18px;font-size:.875rem;font-weight:600;color:var(--brand-deep);
+  background:var(--brand-bg);border:1.5px dashed var(--brand-light);
+  border-radius:var(--radius-sm);cursor:pointer;transition:background .2s;
+  width:100%;font-family:inherit;
+}
+.add-more:hover{background:var(--brand-bg-deep)}
+
+/* ── Expenses table ── */
+table.expenses{width:100%;border-collapse:collapse;font-size:.875rem}
+table.expenses th,table.expenses td{
+  border-bottom:1px solid var(--gray-200);padding:10px 8px;text-align:left;vertical-align:middle;
+}
+table.expenses th{
+  color:var(--gray-400);font-weight:600;font-size:.6875rem;
+  text-transform:uppercase;letter-spacing:.04em;
+}
+table.expenses input,table.expenses select{
+  padding:8px 10px;font-size:.875rem;
+  border:1.5px solid var(--gray-300);border-radius:6px;width:100%;
+}
+table.expenses .total-row td{
+  font-weight:700;background:var(--brand-bg);color:var(--gray-800);
+  font-family:'Playfair Display',Georgia,serif;font-size:1rem;
+}
+
+/* ── Error summary ── */
+.errors{
+  background:var(--red-bg);border:1.5px solid #fca5a5;
+  border-radius:var(--radius-sm);padding:16px 18px;color:#8a1010;
+  margin-bottom:18px;display:none;
+}
+.errors.show{display:block}
+.errors h3{
+  color:#8a1010;margin-bottom:8px;font-size:.9375rem;font-weight:600;
+  font-family:'Inter',sans-serif;
+}
+.errors ul{margin:0;padding-left:18px;font-size:.8125rem;line-height:1.6}
+
+/* ── Bottom submit bar ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--white);border-top:1px solid var(--gray-200);
+  padding:14px 16px;padding-bottom:max(14px,env(safe-area-inset-bottom));
+  display:flex;gap:12px;z-index:100;
+}
+.bottom-nav .container{max-width:640px;margin:0 auto;padding:0;display:flex;gap:12px;width:100%}
+.bottom-nav .btn-secondary{flex:0 0 auto}
+.bottom-nav .btn-submit{flex:1}
+
+/* ── Success ── */
+.success-screen{display:none;text-align:center;padding:60px 24px}
+.success-screen.active{display:block}
+.success-icon{
+  width:72px;height:72px;background:var(--brand-bg);
+  border:2px solid var(--brand);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:2rem;margin:0 auto 20px;color:var(--brand-deep);font-weight:700;
+}
+.success-screen h1{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:1.75rem;margin-bottom:10px;color:var(--gray-800);
+}
+.success-screen p{color:var(--gray-500);font-size:.9375rem;max-width:360px;margin:0 auto 14px}
+.success-ref{
+  font-family:ui-monospace,'SF Mono',monospace;font-size:.75rem;
+  color:var(--gray-500);background:var(--gray-50);display:inline-block;
+  padding:8px 14px;border-radius:6px;border:1px solid var(--gray-200);
+  margin-top:6px;
+}
+
+/* ── Responsive ── */
+@media (max-width:480px){
+  .field-row,.field-row-3{grid-template-columns:1fr;gap:16px}
+  .toggle{flex-direction:column}
+  .toggle button{flex:none;min-width:0}
+  .rs-row.cols-3,.rs-row.cols-4,.rs-row.cols-6{grid-template-columns:1fr}
+  .intro-title{font-size:1.5rem}
+  .card{padding:18px}
+}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <img src="slogan logtransparent .png" alt="Homeowner Assist — Navigating Every Step of Your Real Estate Journey" class="header-logo">
+  <p>NCCP Client Needs Analysis</p>
+</header>
+
+<div class="container">
+
+  <!-- ═══════════ SCREEN 0 — Intro ═══════════ -->
+  <section id="screen-intro" class="intro-card">
+    <h1 class="intro-title">Your Client Needs Analysis</h1>
+    <div class="intro-body">
+      <p>The form you're about to complete is called an <strong>NCCP Client Needs Analysis</strong>. It's a legally required record of your personal, financial and employment situation that Homeowner Assist and our lending partner rely on to decide whether the loan you're applying for is genuinely suitable for you. The National Consumer Credit Protection Act (the "NCCP" in the name) requires it, and the lender cannot assess your Assessment in Principle without it.</p>
+
+      <p>It exists to protect you. By answering every question accurately, you give the lender a complete picture of your circumstances — your income, your commitments, your goals — so they can make sure the loan structure won't put you under avoidable financial stress. It's also the document we refer back to if anything about your situation is ever questioned later, so it needs to reflect the truth of where you're at right now.</p>
+
+      <p>Please fill every field carefully. A single blank, a debt that slipped your mind (including buy-now-pay-later accounts like AfterPay, Zip or Humm, store cards, or HECS/HELP), or a name that doesn't exactly match your ID is enough for the lender to push the whole application back to us for correction — and every correction round typically adds one to two weeks to your purchase timeline. Completeness genuinely protects your move-in date as much as it protects the lender.</p>
+
+      <p>Set aside about 20–25 minutes and complete it in one sitting — the form can't be saved and returned to. Before you start, have your bank details, a list of your debts (including credit cards, BNPL and student loans), and your employer's contact details handy. If something doesn't apply to you, choose <em>N/A</em>, <em>Unknown</em> or <em>Unsure</em> from the dropdown rather than leaving the field empty.</p>
+    </div>
+
+    <div class="ack-box">
+      <input type="checkbox" id="introAck">
+      <label for="introAck">I've read this and I understand why my answers must be complete and accurate.</label>
+    </div>
+
+    <button id="startBtn" class="btn btn-primary btn-block" disabled>Start form</button>
+  </section>
+
+  <!-- ═══════════ SCREEN 1 — Form ═══════════ -->
+  <form id="nccpForm" class="form-section hidden" novalidate>
+
+    <div class="errors" id="errorSummary">
+      <h3>Please fix the following before submitting:</h3>
+      <ul id="errorList"></ul>
+    </div>
+
+    <!-- 1. Needs -->
+    <section class="card" id="sec-needs">
+      <div class="card-title"><span class="icon">1</span> Needs &amp; Objectives</div>
+      <div class="callout">How much are you expecting you'll need to borrow to purchase your property?</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Loan amount (AUD) <span class="required">*</span></label>
+          <input type="number" min="0" name="loan_amount" required>
+          <div class="hint">If the final figure isn't confirmed yet, enter the amount you expect to need (e.g. the property price less your deposit and any grants).</div>
+        </div>
+        <div class="field"><label>Purchase status <span class="required">*</span></label>
+          <select name="purchase_status" required>
+            <option value="">Select…</option>
+            <option>Still looking</option>
+            <option>Found a property</option>
+            <option>Signed contract</option>
+            <option>Refinance (not purchasing)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>First home buyer? <span class="required">*</span></label>
+          <select name="first_home_buyer" required><option value="">Select…</option><option>Yes</option><option>No</option></select>
+        </div>
+        <div class="field"><label>Loan purpose <span class="required">*</span></label>
+          <select name="loan_purpose" required><option value="">Select…</option><option>Owner occupier</option><option>Investment</option><option>SMSF</option></select>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Applicant 1 -->
+    <section class="card" id="sec-app1">
+      <div class="card-title"><span class="icon">2</span> Personal details — Applicant 1</div>
+      <div class="callout">Your full legal name must match your ID exactly, including middle names.</div>
+
+      <div class="field-row-3">
+        <div class="field"><label>Title <span class="required">*</span></label>
+          <select name="app1_title" required><option value="">Select…</option><option>Mr</option><option>Mrs</option><option>Ms</option><option>Miss</option><option>Dr</option><option>Other</option></select>
+        </div>
+        <div class="field"><label>Given names <span class="required">*</span></label><input name="app1_given" required></div>
+        <div class="field"><label>Surname <span class="required">*</span></label><input name="app1_surname" required></div>
+      </div>
+      <div class="field-row-3">
+        <div class="field"><label>Preferred name <span class="required">*</span></label><input name="app1_preferred" required placeholder="Or N/A"></div>
+        <div class="field"><label>Previous name <span class="required">*</span></label><input name="app1_previous" required placeholder="Or N/A"></div>
+        <div class="field"><label>Date of birth <span class="required">*</span></label><input type="date" name="app1_dob" required></div>
+      </div>
+      <div class="field-row-3">
+        <div class="field"><label>Gender <span class="required">*</span></label>
+          <select name="app1_gender" required><option value="">Select…</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Prefer not to say</option></select>
+        </div>
+        <div class="field"><label>Marital status <span class="required">*</span></label>
+          <select name="app1_marital" required><option value="">Select…</option><option>Single</option><option>Married</option><option>De facto</option><option>Separated</option><option>Divorced</option><option>Widowed</option></select>
+        </div>
+        <div class="field"><label>Number of dependents <span class="required">*</span></label>
+          <input type="number" min="0" max="12" name="app1_dependents" required value="0" id="app1_depCount">
+        </div>
+      </div>
+      <div id="app1_depRows"></div>
+    </section>
+
+    <!-- 3. Partner -->
+    <section class="card" id="sec-partner">
+      <div class="card-title"><span class="icon">3</span> Applicant 2 (partner / co-applicant)</div>
+      <div class="field">
+        <label>Is there a second applicant on this loan? <span class="required">*</span></label>
+        <div class="toggle" data-toggle="has_partner">
+          <button type="button" data-value="yes">Yes</button>
+          <button type="button" data-value="no">No</button>
+        </div>
+      </div>
+
+      <div id="app2Block" class="hidden" style="margin-top:18px">
+        <div class="field-row-3">
+          <div class="field"><label>Title <span class="required">*</span></label>
+            <select name="app2_title"><option value="">Select…</option><option>Mr</option><option>Mrs</option><option>Ms</option><option>Miss</option><option>Dr</option><option>Other</option></select>
+          </div>
+          <div class="field"><label>Given names <span class="required">*</span></label><input name="app2_given"></div>
+          <div class="field"><label>Surname <span class="required">*</span></label><input name="app2_surname"></div>
+        </div>
+        <div class="field-row-3">
+          <div class="field"><label>Date of birth <span class="required">*</span></label><input type="date" name="app2_dob"></div>
+          <div class="field"><label>Gender <span class="required">*</span></label>
+            <select name="app2_gender"><option value="">Select…</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Prefer not to say</option></select>
+          </div>
+          <div class="field"><label>Marital status <span class="required">*</span></label>
+            <select name="app2_marital"><option value="">Select…</option><option>Single</option><option>Married</option><option>De facto</option><option>Separated</option><option>Divorced</option><option>Widowed</option></select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Mobile <span class="required">*</span></label><input type="tel" name="app2_mobile"></div>
+          <div class="field"><label>Email <span class="required">*</span></label><input type="email" name="app2_email"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Address & contact -->
+    <section class="card" id="sec-address">
+      <div class="card-title"><span class="icon">4</span> Address &amp; contact</div>
+      <h3 class="sub-head">Current address</h3>
+      <div class="field"><label>Street address <span class="required">*</span></label><input name="curr_street" required></div>
+      <div class="field-row-3">
+        <div class="field"><label>Suburb <span class="required">*</span></label><input name="curr_suburb" required></div>
+        <div class="field"><label>State <span class="required">*</span></label>
+          <select name="curr_state" required><option value="">Select…</option><option>ACT</option><option>NSW</option><option>NT</option><option>QLD</option><option>SA</option><option>TAS</option><option>VIC</option><option>WA</option></select>
+        </div>
+        <div class="field"><label>Postcode <span class="required">*</span></label><input name="curr_postcode" required inputmode="numeric"></div>
+      </div>
+      <div class="field-row-3">
+        <div class="field"><label>Date moved in <span class="required">*</span></label><input type="date" name="curr_since" required></div>
+        <div class="field"><label>Ownership <span class="required">*</span></label>
+          <select name="curr_status" id="currStatus" required><option value="">Select…</option><option>Own outright</option><option>Owner with mortgage</option><option>Renting</option><option>Boarding</option><option>Living with family</option><option>Other</option></select>
+        </div>
+        <div class="field"><label>Years at this address <span class="required">*</span></label><input type="number" min="0" step="0.1" name="curr_years" id="currYears" required></div>
+      </div>
+
+      <div id="prevAddrBlock" class="hidden">
+        <h3 class="sub-head">Previous address (required — less than 3 years at current)</h3>
+        <div class="field"><label>Street address <span class="required">*</span></label><input name="prev_street"></div>
+        <div class="field-row-3">
+          <div class="field"><label>Suburb <span class="required">*</span></label><input name="prev_suburb"></div>
+          <div class="field"><label>State <span class="required">*</span></label>
+            <select name="prev_state"><option value="">Select…</option><option>ACT</option><option>NSW</option><option>NT</option><option>QLD</option><option>SA</option><option>TAS</option><option>VIC</option><option>WA</option></select>
+          </div>
+          <div class="field"><label>Postcode <span class="required">*</span></label><input name="prev_postcode"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Date moved in <span class="required">*</span></label><input type="date" name="prev_since"></div>
+          <div class="field"><label>Date moved out <span class="required">*</span></label><input type="date" name="prev_until"></div>
+        </div>
+      </div>
+
+      <h3 class="sub-head">Contact — Applicant 1</h3>
+      <div class="field-row-3">
+        <div class="field"><label>Mobile <span class="required">*</span></label><input type="tel" name="app1_mobile" required></div>
+        <div class="field"><label>Email <span class="required">*</span></label><input type="email" name="app1_email" required></div>
+        <div class="field"><label>Home phone <span class="required">*</span></label><input type="tel" name="app1_home" required placeholder="Or N/A"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>ID type <span class="required">*</span></label>
+          <select name="app1_id_type" required><option value="">Select…</option><option>Driver licence</option><option>Passport</option><option>Medicare</option><option>Proof of age card</option></select>
+        </div>
+        <div class="field"><label>ID document number <span class="required">*</span></label><input name="app1_id_number" required></div>
+      </div>
+    </section>
+
+    <!-- 5. Employment -->
+    <section class="card" id="sec-employment">
+      <div class="card-title"><span class="icon">5</span> Employment &amp; income</div>
+      <h3 class="sub-head">Applicant 1</h3>
+      <div class="field-row-3">
+        <div class="field"><label>Employment type <span class="required">*</span></label>
+          <select name="app1_emp_type" required><option value="">Select…</option><option>PAYG</option><option>Self-employed</option><option>Contractor</option><option>Retired</option><option>Unemployed</option><option>Home duties</option><option>Student</option></select>
+        </div>
+        <div class="field"><label>Basis <span class="required">*</span></label>
+          <select name="app1_emp_basis" required><option value="">Select…</option><option>Full time</option><option>Part time</option><option>Casual</option><option>Contract</option><option>N/A</option></select>
+        </div>
+        <div class="field"><label>Start date <span class="required">*</span></label><input type="date" name="app1_emp_start" required></div>
+      </div>
+      <div class="field-row-3">
+        <div class="field"><label>Occupation / job title <span class="required">*</span></label><input name="app1_emp_occupation" required></div>
+        <div class="field"><label>Income amount <span class="required">*</span></label><input type="number" min="0" name="app1_emp_income" required></div>
+        <div class="field"><label>Gross or net? <span class="required">*</span></label>
+          <select name="app1_emp_gross_net" required><option value="">Select…</option><option>Gross</option><option>Net</option></select>
+        </div>
+      </div>
+      <div class="field-row-3">
+        <div class="field"><label>Pay frequency <span class="required">*</span></label>
+          <select name="app1_emp_freq" required><option value="">Select…</option><option>Weekly</option><option>Fortnightly</option><option>Monthly</option><option>Per annum</option></select>
+        </div>
+        <div class="field"><label>On probation? <span class="required">*</span></label>
+          <select name="app1_emp_probation" required><option value="">Select…</option><option>Yes</option><option>No</option><option>N/A</option></select>
+        </div>
+        <div class="field"><label>Years in current role <span class="required">*</span></label><input type="number" min="0" step="0.1" name="app1_emp_years" required></div>
+      </div>
+      <h3 class="sub-head">Employer</h3>
+      <div class="field-row">
+        <div class="field"><label>Employer name <span class="required">*</span></label><input name="app1_emp_employer" required></div>
+        <div class="field"><label>Employer phone <span class="required">*</span></label><input type="tel" name="app1_emp_phone" required></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Employer address <span class="required">*</span></label><input name="app1_emp_address" required></div>
+        <div class="field"><label>HR / contact person <span class="required">*</span></label><input name="app1_emp_contact" required placeholder="Or N/A"></div>
+      </div>
+
+      <div id="prevEmpBlock" class="hidden">
+        <h3 class="sub-head">Previous employment (required — less than 3 years in current role)</h3>
+        <div class="callout">The lender needs 3 years of continuous employment history. If your current role started less than 3 years ago, fill in your previous position.</div>
+        <div class="field-row-3">
+          <div class="field"><label>Previous employer <span class="required">*</span></label><input name="app1_prev_emp_employer"></div>
+          <div class="field"><label>Occupation / title <span class="required">*</span></label><input name="app1_prev_emp_occupation"></div>
+          <div class="field"><label>Basis <span class="required">*</span></label>
+            <select name="app1_prev_emp_basis"><option value="">Select…</option><option>Full time</option><option>Part time</option><option>Casual</option><option>Contract</option></select>
+          </div>
+        </div>
+        <div class="field-row-3">
+          <div class="field"><label>Date started <span class="required">*</span></label><input type="date" name="app1_prev_emp_start"></div>
+          <div class="field"><label>Date finished <span class="required">*</span></label><input type="date" name="app1_prev_emp_finish"></div>
+          <div class="field"><label>Employer phone <span class="required">*</span></label><input type="tel" name="app1_prev_emp_phone" placeholder="Or N/A"></div>
+        </div>
+      </div>
+
+      <h3 class="sub-head">Other income</h3>
+      <div class="field">
+        <label>Do you receive any other income? (bonus, commission, Centrelink, Family Tax Benefit, rental, etc.) <span class="required">*</span></label>
+        <textarea name="other_income" required rows="2" placeholder="Describe any additional income, or enter N/A if none"></textarea>
+      </div>
+    </section>
+
+    <!-- 6. Assets -->
+    <section class="card" id="sec-assets">
+      <div class="card-title"><span class="icon">6</span> Assets</div>
+      <div class="callout">List every account, vehicle and super balance. If you genuinely have none of a type, tick "N/A" for that group.</div>
+
+      <h3 class="sub-head">Savings &amp; transaction accounts</h3>
+      <div class="rowset" data-set="savings">
+        <label class="na-check"><input type="checkbox" data-na="savings"> I don't have any savings/transaction accounts</label>
+        <div class="rs-rows"></div>
+        <button type="button" class="add-more" data-add="savings">+ Add account</button>
+      </div>
+
+      <h3 class="sub-head">Motor vehicles</h3>
+      <div class="rowset" data-set="vehicles">
+        <label class="na-check"><input type="checkbox" data-na="vehicles"> I don't own any vehicles</label>
+        <div class="rs-rows"></div>
+        <button type="button" class="add-more" data-add="vehicles">+ Add vehicle</button>
+      </div>
+
+      <h3 class="sub-head">Superannuation</h3>
+      <div class="rowset" data-set="super">
+        <label class="na-check"><input type="checkbox" data-na="super"> I don't have any super</label>
+        <div class="rs-rows"></div>
+        <button type="button" class="add-more" data-add="super">+ Add super fund</button>
+      </div>
+    </section>
+
+    <!-- 7. Liabilities -->
+    <section class="card" id="sec-liabilities">
+      <div class="card-title"><span class="icon">7</span> Liabilities (debts)</div>
+      <div class="callout">List <strong>every</strong> debt — even if the balance is $0 and even if you plan to pay it out. Forgotten debts are the single most common reason the lender sends packs back.</div>
+
+      <h3 class="sub-head">Credit cards, loans &amp; mortgages</h3>
+      <div class="rowset" data-set="liabilities">
+        <label class="na-check"><input type="checkbox" data-na="liabilities"> I don't have any loans, credit cards or mortgages</label>
+        <div class="rs-rows"></div>
+        <button type="button" class="add-more" data-add="liabilities">+ Add liability</button>
+      </div>
+
+      <h3 class="sub-head">Buy-now-pay-later &amp; store cards</h3>
+      <p class="hint" style="margin-bottom:10px">Tick every provider you have an account with — even if the balance is currently $0:</p>
+      <div class="bnpl-grid">
+        <label class="bnpl-chip"><input type="checkbox" name="bnpl" value="AfterPay">AfterPay</label>
+        <label class="bnpl-chip"><input type="checkbox" name="bnpl" value="Zip Pay">Zip Pay</label>
+        <label class="bnpl-chip"><input type="checkbox" name="bnpl" value="Zip Money">Zip Money</label>
+        <label class="bnpl-chip"><input type="checkbox" name="bnpl" value="Humm">Humm</label>
+        <label class="bnpl-chip"><input type="checkbox" name="bnpl" value="Step Pay">Step Pay (CBA)</label>
+        <label class="bnpl-chip"><input type="checkbox" name="bnpl" value="Klarna">Klarna</label>
+        <label class="bnpl-chip"><input type="checkbox" name="bnpl" value="Before Pay">Before Pay</label>
+        <label class="bnpl-chip"><input type="checkbox" name="bnpl" value="Other">Other</label>
+        <label class="bnpl-chip"><input type="checkbox" name="bnpl" value="None" id="bnplNone">None of these</label>
+      </div>
+
+      <h3 class="sub-head">HECS / HELP student debt</h3>
+      <div class="field-row">
+        <div class="field"><label>Do you have a HECS/HELP debt? <span class="required">*</span></label>
+          <select name="has_hecs" id="hasHecs" required><option value="">Select…</option><option>Yes</option><option>No</option><option>Unsure</option></select>
+        </div>
+        <div class="field hidden" id="hecsBalanceField"><label>Approximate balance <span class="required">*</span></label><input type="number" min="0" name="hecs_balance"></div>
+      </div>
+    </section>
+
+    <!-- 8. Expenses -->
+    <section class="card" id="sec-expenses">
+      <div class="card-title"><span class="icon">8</span> Living expenses</div>
+      <div class="callout">Every category must have an amount. If a category is $0, explain why in the "Why $0?" column (e.g. "included in rent"). Blank rows will cause the lender to push back.</div>
+      <div style="overflow-x:auto">
+        <table class="expenses" id="expensesTable">
+          <thead><tr><th>Category</th><th>Amount&nbsp;(AUD)</th><th>Frequency</th><th>Why&nbsp;$0?</th></tr></thead>
+          <tbody></tbody>
+          <tfoot><tr class="total-row"><td>Estimated total / month</td><td colspan="3" id="expensesTotal">$0.00</td></tr></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9. Consent -->
+    <section class="card" id="sec-submit">
+      <div class="card-title"><span class="icon">9</span> Confirm &amp; submit</div>
+      <div class="ack-box">
+        <input type="checkbox" id="finalAck">
+        <label for="finalAck">I confirm that the information I've provided is true, complete and accurate to the best of my knowledge, and I understand that providing false or misleading information may affect my loan application and could constitute a legal offence.</label>
+      </div>
+    </section>
+
+    <!-- Bottom nav -->
+    <div class="bottom-nav">
+      <div class="container">
+        <button type="button" class="btn btn-secondary" id="backToIntro">← Back</button>
+        <button type="submit" class="btn btn-submit" id="submitBtn" disabled>Submit NCCP form</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- ═══════════ SCREEN 2 — Success ═══════════ -->
+  <section id="screen-success" class="success-screen">
+    <div class="success-icon">✓</div>
+    <h1>Submitted — thank you</h1>
+    <p>Your NCCP Client Needs Analysis has been received. Elise will review it within one business day and contact you directly if anything needs clarifying.</p>
+    <div class="success-ref" id="successRef"></div>
+  </section>
+
+</div>
+
+<script>
+// =================================================================
+//  CONFIG
+// =================================================================
+const SUPABASE_URL = 'https://vhskfgmdiotjupmhhvkl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoc2tmZ21kaW90anVwbWhodmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxOTc1NzgsImV4cCI6MjA4ODc3MzU3OH0.El2vzS9tKfV4FT3d78V4rnNeWIok9SuqZzUI0aBqf78';
+const BUCKET = 'client-documents';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// =================================================================
+//  EXPENSE CATEGORIES
+// =================================================================
+const EXPENSE_CATS = [
+  'Rent / mortgage', 'Body corporate / strata', 'Council rates & water',
+  'Utilities (gas / electricity)', 'Groceries & household', 'Transport / fuel / public transport',
+  'Car insurance & rego', 'Home & contents insurance', 'Health insurance',
+  'Life / income protection insurance', 'Childcare & school fees', 'Child support / maintenance',
+  'Communication & media (phone, internet, streaming)', 'Clothing & personal care',
+  'Entertainment & dining out', 'Medical & dental (out of pocket)', 'Other regular expenses'
+];
+
+function buildExpenseRows(){
+  const tbody = document.querySelector('#expensesTable tbody');
+  tbody.innerHTML = '';
+  EXPENSE_CATS.forEach((cat,i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${cat}</td>
+      <td><input type="number" min="0" step="0.01" data-exp-amt="${i}" required></td>
+      <td><select data-exp-freq="${i}" required><option value="">Select…</option><option>Weekly</option><option>Fortnightly</option><option>Monthly</option><option>Per annum</option></select></td>
+      <td><input data-exp-note="${i}" placeholder="Only if $0"></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.addEventListener('input', recalcExpenses);
+}
+
+function toMonthly(amt, freq){
+  const a = parseFloat(amt)||0;
+  switch(freq){
+    case 'Weekly': return a*52/12;
+    case 'Fortnightly': return a*26/12;
+    case 'Monthly': return a;
+    case 'Per annum': return a/12;
+    default: return 0;
+  }
+}
+function recalcExpenses(){
+  let total = 0;
+  EXPENSE_CATS.forEach((_,i)=>{
+    const amt = document.querySelector(`[data-exp-amt="${i}"]`).value;
+    const freq = document.querySelector(`[data-exp-freq="${i}"]`).value;
+    total += toMonthly(amt, freq);
+  });
+  document.getElementById('expensesTotal').textContent = '$' + total.toFixed(2);
+  return total;
+}
+
+// =================================================================
+//  REPEATABLE ROWSETS
+// =================================================================
+const ROWSET_DEFS = {
+  savings: { cols:'cols-3', fields:[
+    {n:'institution',ph:'Institution',t:'text'},
+    {n:'balance',ph:'Balance (AUD)',t:'number'}
+  ]},
+  vehicles: { cols:'cols-3', fields:[
+    {n:'description',ph:'Make / model / year',t:'text'},
+    {n:'value',ph:'Est. value (AUD)',t:'number'}
+  ]},
+  super: { cols:'cols-3', fields:[
+    {n:'fund',ph:'Fund name',t:'text'},
+    {n:'balance',ph:'Balance (AUD)',t:'number'}
+  ]},
+  liabilities: { cols:'cols-6', fields:[
+    {n:'provider',ph:'Provider',t:'text'},
+    {n:'type',ph:'Type',t:'select',opts:['Credit card','Personal loan','Car loan','Home loan','Store card','Other']},
+    {n:'balance',ph:'Balance',t:'number'},
+    {n:'limit',ph:'Limit',t:'number'},
+    {n:'repayment',ph:'Repayment',t:'number'}
+  ]},
+};
+
+function addRow(setName){
+  const def = ROWSET_DEFS[setName];
+  const set = document.querySelector(`.rowset[data-set="${setName}"] .rs-rows`);
+  const row = document.createElement('div');
+  row.className = `rs-row ${def.cols}`;
+  def.fields.forEach(f=>{
+    if (f.t === 'select'){
+      const sel = document.createElement('select');
+      sel.name = `${setName}_${f.n}`;
+      sel.innerHTML = `<option value="">${f.ph}</option>` + f.opts.map(o=>`<option>${o}</option>`).join('');
+      sel.required = true;
+      row.appendChild(sel);
+    } else {
+      const inp = document.createElement('input');
+      inp.type = f.t;
+      if (f.t==='number'){ inp.min = 0; }
+      inp.placeholder = f.ph;
+      inp.name = `${setName}_${f.n}`;
+      inp.required = true;
+      row.appendChild(inp);
+    }
+  });
+  const del = document.createElement('button');
+  del.type = 'button'; del.className='del'; del.textContent='×';
+  del.onclick = ()=>row.remove();
+  row.appendChild(del);
+  set.appendChild(row);
+}
+
+function initRowsets(){
+  document.querySelectorAll('[data-add]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const set = btn.dataset.add;
+      const naEl = document.querySelector(`[data-na="${set}"]`);
+      if (naEl && naEl.checked){ naEl.checked = false; toggleNA(set); }
+      addRow(set);
+    });
+  });
+  document.querySelectorAll('[data-na]').forEach(chk=>{
+    chk.addEventListener('change', ()=>toggleNA(chk.dataset.na));
+  });
+  Object.keys(ROWSET_DEFS).forEach(addRow);
+}
+
+function toggleNA(setName){
+  const na = document.querySelector(`[data-na="${setName}"]`).checked;
+  const rows = document.querySelector(`.rowset[data-set="${setName}"] .rs-rows`);
+  rows.querySelectorAll('input, select').forEach(i=>{
+    i.disabled = na;
+    if (na){ i.removeAttribute('required'); } else { i.setAttribute('required','true'); }
+  });
+}
+
+// =================================================================
+//  TOGGLES & CONDITIONALS
+// =================================================================
+function initToggles(){
+  document.querySelectorAll('[data-toggle="has_partner"] button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      const yes = b.dataset.value === 'yes';
+      const block = document.getElementById('app2Block');
+      block.classList.toggle('hidden', !yes);
+      block.querySelectorAll('input, select').forEach(i=>{
+        if (yes) i.setAttribute('required','true'); else i.removeAttribute('required');
+      });
+    });
+  });
+
+  document.getElementById('app1_depCount').addEventListener('input', (e)=>{
+    const n = Math.max(0, Math.min(12, parseInt(e.target.value)||0));
+    const wrap = document.getElementById('app1_depRows');
+    wrap.innerHTML = '';
+    if (n > 0){
+      const row = document.createElement('div');
+      row.className = 'field-row';
+      for (let i=0;i<n;i++){
+        const f = document.createElement('div');
+        f.className='field';
+        f.innerHTML = `<label>Dependent ${i+1} DOB <span class="required">*</span></label><input type="date" name="dep_${i}_dob" required>`;
+        row.appendChild(f);
+      }
+      wrap.appendChild(row);
+    }
+  });
+
+  const curY = document.getElementById('currYears');
+  curY.addEventListener('input', ()=>{
+    const needs = (parseFloat(curY.value)||0) < 3;
+    const block = document.getElementById('prevAddrBlock');
+    block.classList.toggle('hidden', !needs);
+    block.querySelectorAll('input, select').forEach(i=>{
+      if (needs) i.setAttribute('required','true'); else i.removeAttribute('required');
+    });
+  });
+
+  const empY = document.querySelector('[name="app1_emp_years"]');
+  empY.addEventListener('input', ()=>{
+    const needs = (parseFloat(empY.value)||0) < 3;
+    const block = document.getElementById('prevEmpBlock');
+    block.classList.toggle('hidden', !needs);
+    block.querySelectorAll('input, select').forEach(i=>{
+      if (needs) i.setAttribute('required','true'); else i.removeAttribute('required');
+    });
+  });
+
+  document.getElementById('hasHecs').addEventListener('change', (e)=>{
+    const show = e.target.value === 'Yes';
+    const f = document.getElementById('hecsBalanceField');
+    f.classList.toggle('hidden', !show);
+    const inp = f.querySelector('input');
+    if (show) inp.setAttribute('required','true'); else inp.removeAttribute('required');
+  });
+
+  document.querySelectorAll('input[name="bnpl"]').forEach(c=>{
+    c.addEventListener('change',()=>{
+      const none = document.getElementById('bnplNone');
+      if (c === none && c.checked){
+        document.querySelectorAll('input[name="bnpl"]').forEach(x=>{ if (x!==none) x.checked=false; });
+      } else if (c !== none && c.checked){
+        none.checked = false;
+      }
+      document.querySelectorAll('.bnpl-chip').forEach(chip=>{
+        chip.classList.toggle('active', chip.querySelector('input').checked);
+      });
+    });
+  });
+
+  document.getElementById('finalAck').addEventListener('change',(e)=>{
+    document.getElementById('submitBtn').disabled = !e.target.checked;
+  });
+}
+
+// =================================================================
+//  VALIDATION / COLLECT / SUBMIT
+// =================================================================
+function validateForm(){
+  const errors = [];
+  const form = document.getElementById('nccpForm');
+  form.querySelectorAll('.field.invalid').forEach(f=>f.classList.remove('invalid'));
+
+  form.querySelectorAll('input, select, textarea').forEach(el=>{
+    if (el.disabled) return;
+    if (!el.hasAttribute('required')) return;
+    if (el.type === 'checkbox') return;
+    // Expense table inputs have their own dedicated validator below — skip here
+    if (el.hasAttribute('data-exp-amt') || el.hasAttribute('data-exp-freq') || el.hasAttribute('data-exp-note')) return;
+    // Skip fields inside hidden blocks (conditional sections not currently applicable)
+    if (el.closest('.hidden')) return;
+    if (!el.value || el.value.trim() === ''){
+      const fieldEl = el.closest('.field');
+      const labelText = fieldEl?.querySelector('label')?.textContent?.replace('*','').trim();
+      // Only surface errors with a resolvable label — anything else is a dev bug, not a client-facing issue
+      if (labelText) {
+        errors.push(labelText);
+        fieldEl?.classList.add('invalid');
+      }
+    }
+  });
+
+  const bnplAny = Array.from(document.querySelectorAll('input[name="bnpl"]')).some(c=>c.checked);
+  if (!bnplAny) errors.push('Please tick at least one BNPL option (or "None of these")');
+
+  Object.keys(ROWSET_DEFS).forEach(set=>{
+    const na = document.querySelector(`[data-na="${set}"]`).checked;
+    const rows = document.querySelectorAll(`.rowset[data-set="${set}"] .rs-row`);
+    if (!na && rows.length === 0) { errors.push(`${set}: add at least one row or tick "N/A"`); return; }
+    if (na) return;
+    // Validate every non-disabled row has every input/select filled
+    rows.forEach((r, idx)=>{
+      const bad = [];
+      r.querySelectorAll('input, select').forEach(el=>{
+        if (el.disabled) return;
+        if (!el.value || el.value.trim() === ''){
+          bad.push(el.placeholder || el.name || 'field');
+        }
+      });
+      if (bad.length){
+        r.style.boxShadow = '0 0 0 2px #B91C1C';
+        errors.push(`${set.charAt(0).toUpperCase()+set.slice(1)} row ${idx+1}: ${bad.join(', ')} — fill in or remove the row`);
+      } else {
+        r.style.boxShadow = '';
+      }
+    });
+  });
+
+  EXPENSE_CATS.forEach((cat,i)=>{
+    const amt = document.querySelector(`[data-exp-amt="${i}"]`).value;
+    const freq = document.querySelector(`[data-exp-freq="${i}"]`).value;
+    const note = document.querySelector(`[data-exp-note="${i}"]`).value;
+    if (amt === '' || !freq) errors.push(`Expenses — ${cat}: amount & frequency required`);
+    if (parseFloat(amt) === 0 && !note.trim()) errors.push(`Expenses — ${cat}: explain why $0`);
+  });
+
+  return errors;
+}
+
+function collectPayload(){
+  const f = document.getElementById('nccpForm');
+  const fd = new FormData(f);
+  const obj = {};
+  for (const [k,v] of fd.entries()){
+    if (k === 'bnpl'){ obj.bnpl = obj.bnpl || []; obj.bnpl.push(v); }
+    else { obj[k] = v; }
+  }
+  obj.rowsets = {};
+  Object.keys(ROWSET_DEFS).forEach(set=>{
+    const na = document.querySelector(`[data-na="${set}"]`).checked;
+    if (na){ obj.rowsets[set] = { na:true, rows:[] }; return; }
+    const rows = [];
+    document.querySelectorAll(`.rowset[data-set="${set}"] .rs-row`).forEach(r=>{
+      const row = {};
+      ROWSET_DEFS[set].fields.forEach(ff=>{
+        const el = r.querySelector(`[name="${set}_${ff.n}"]`);
+        row[ff.n] = el ? el.value : '';
+      });
+      rows.push(row);
+    });
+    obj.rowsets[set] = { na:false, rows };
+  });
+  const depCount = parseInt(obj.app1_dependents)||0;
+  obj.dependents_dobs = [];
+  for (let i=0;i<depCount;i++) obj.dependents_dobs.push(obj[`dep_${i}_dob`]);
+  obj.expenses = EXPENSE_CATS.map((cat,i)=>({
+    category: cat,
+    amount: parseFloat(document.querySelector(`[data-exp-amt="${i}"]`).value)||0,
+    frequency: document.querySelector(`[data-exp-freq="${i}"]`).value,
+    zero_note: document.querySelector(`[data-exp-note="${i}"]`).value
+  }));
+  obj.expenses_monthly_total = recalcExpenses();
+  obj.has_partner = document.querySelector('[data-toggle="has_partner"] .active')?.dataset.value === 'yes';
+  return obj;
+}
+
+async function handleSubmit(e){
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const errs = validateForm();
+  const errBox = document.getElementById('errorSummary');
+  const errList = document.getElementById('errorList');
+
+  if (errs.length){
+    errList.innerHTML = errs.map(x=>`<li>${x}</li>`).join('');
+    errBox.classList.add('show');
+    errBox.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  errBox.classList.remove('show');
+
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  try {
+    const payload = collectPayload();
+    const app1FullName = `${payload.app1_title||''} ${payload.app1_given||''} ${payload.app1_surname||''}`.trim();
+    const app2FullName = payload.has_partner ? `${payload.app2_title||''} ${payload.app2_given||''} ${payload.app2_surname||''}`.trim() : null;
+
+    const row = {
+      app1_full_name: app1FullName,
+      app1_dob: payload.app1_dob || null,
+      app1_email: payload.app1_email,
+      app1_mobile: payload.app1_mobile,
+      has_partner: payload.has_partner,
+      app2_full_name: app2FullName,
+      app2_dob: payload.has_partner ? (payload.app2_dob || null) : null,
+      app2_email: payload.has_partner ? payload.app2_email : null,
+      app2_mobile: payload.has_partner ? payload.app2_mobile : null,
+      loan_amount: parseFloat(payload.loan_amount)||null,
+      first_home_buyer: payload.first_home_buyer === 'Yes',
+      purchase_status: payload.purchase_status,
+      current_address: `${payload.curr_street}, ${payload.curr_suburb} ${payload.curr_state} ${payload.curr_postcode}`,
+      current_address_since: payload.curr_since || null,
+      has_hecs: payload.has_hecs === 'Yes',
+      has_bnpl: (payload.bnpl||[]).some(b=>b!=='None'),
+      bnpl_providers: (payload.bnpl||[]).filter(b=>b!=='None'),
+      total_monthly_expenses: payload.expenses_monthly_total,
+      payload
+    };
+
+    localStorage.setItem('nccp_pending', JSON.stringify(row));
+
+    const { data, error } = await supabaseClient
+      .from('nccp_submissions')
+      .insert(row)
+      .select('id')
+      .single();
+
+    if (error) throw error;
+
+    const clientFolder = app1FullName.replace(/[^a-z0-9]+/gi,'-').toLowerCase() || 'unknown';
+    const json = new Blob([JSON.stringify({ id: data.id, ...row }, null, 2)], { type:'application/json' });
+    await supabaseClient.storage.from(BUCKET).upload(
+      `${clientFolder}/nccp-${data.id}.json`,
+      json,
+      { upsert: true, contentType: 'application/json' }
+    );
+
+    fetch('/.netlify/functions/sync-to-drive', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ clientFolder, submissionId: data.id })
+    }).catch(()=>{});
+
+    localStorage.removeItem('nccp_pending');
+
+    document.getElementById('nccpForm').classList.add('hidden');
+    document.querySelector('.bottom-nav')?.classList.add('hidden');
+    document.getElementById('screen-success').classList.add('active');
+    document.getElementById('successRef').textContent = 'Reference: ' + data.id;
+    window.scrollTo({top:0,behavior:'smooth'});
+  } catch (err) {
+    console.error('Submit failed', err);
+    alert('Sorry — something went wrong submitting your form:\n\n' + (err.message||err) + '\n\nYour answers are saved locally; please try again in a moment.');
+    btn.disabled = false; btn.textContent = 'Submit NCCP form';
+  }
+}
+
+// =================================================================
+//  BOOT
+// =================================================================
+document.addEventListener('DOMContentLoaded', ()=>{
+  const ack = document.getElementById('introAck');
+  const start = document.getElementById('startBtn');
+  ack.addEventListener('change', ()=>{ start.disabled = !ack.checked; });
+  start.addEventListener('click', ()=>{
+    document.getElementById('screen-intro').classList.add('hidden');
+    document.getElementById('nccpForm').classList.remove('hidden');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+
+  document.getElementById('backToIntro').addEventListener('click', ()=>{
+    document.getElementById('nccpForm').classList.add('hidden');
+    document.getElementById('screen-intro').classList.remove('hidden');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+
+  buildExpenseRows();
+  initRowsets();
+  initToggles();
+
+  document.getElementById('nccpForm').addEventListener('submit', handleSubmit);
+});
+</script>
+</body>
+</html>
